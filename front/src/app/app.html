@@ -1,28 +1,66 @@
-<h1>Lista de Usuarios</h1>
+<div class="app">
+  <div class="container">
 
-<ul>
-  <li *ngFor="let u of usuarios">
-    {{ u.nombre }} - {{ u.email }} - {{ u.edad }}
-    <button (click)="eliminarUsuario(u._id)">Eliminar</button>
-  </li>
-</ul>
+    <header class="page-header">
+      <div class="logo-leaf" aria-hidden="true">🍃</div>
+      <div>
+        <h1>Gestión de Usuarios</h1>
+        <p class="subtitle">CRUD con Angular + MongoDB</p>
+      </div>
+    </header>
 
-<h2>Agregar Usuario</h2>
-<form (ngSubmit)="agregarUsuario()">
-  <label>
-    Nombre:
-    <input type="text" [(ngModel)]="nuevoUsuario.nombre" name="nombre">
-  </label>
-  <br>
-  <label>
-    Email:
-    <input type="email" [(ngModel)]="nuevoUsuario.email" name="email">
-  </label>
-  <br>
-  <label>
-    Edad:
-    <input type="number" [(ngModel)]="nuevoUsuario.edad" name="edad">
-  </label>
-  <br>
-  <button type="submit">Agregar</button>
-</form>
+    <!-- Lista -->
+    <section class="card">
+      <h2>Lista de Usuarios</h2>
+
+      <ul class="user-list">
+        <li class="user-item" *ngFor="let u of usuarios">
+          <span class="user-info">
+            <strong>{{ u.nombre }}</strong>
+            <span class="muted">— {{ u.email }}</span>
+            <span class="badge">{{ u.edad }} años</span>
+          </span>
+
+          <div class="btn-row">
+            <button class="btn btn-outline" (click)="editarUsuario(u)">Editar</button>
+            <button class="btn btn-danger" (click)="eliminarUsuario(u._id!)">Eliminar</button>
+          </div>
+        </li>
+      </ul>
+
+      <p class="empty" *ngIf="usuarios?.length === 0">No hay usuarios aún.</p>
+    </section>
+
+    <!-- Formulario -->
+    <section class="card">
+      <h2>{{ editMode ? 'Editar Usuario' : 'Agregar Usuario' }}</h2>
+
+      <form class="form-grid" (ngSubmit)="onSubmit()">
+        <label class="field">
+          <span>Nombre</span>
+          <input type="text" [(ngModel)]="form.nombre" name="nombre" placeholder="Ej. Ana Pérez" required>
+        </label>
+
+        <label class="field">
+          <span>Email</span>
+          <input type="email" [(ngModel)]="form.email" name="email" placeholder="ana@mail.com" required>
+        </label>
+
+        <label class="field">
+          <span>Edad</span>
+          <input type="number" [(ngModel)]="form.edad" name="edad" min="0" placeholder="30" required>
+        </label>
+
+        <div class="actions" style="gap:10px">
+          <button type="submit" class="btn btn-primary">
+            {{ editMode ? 'Actualizar' : 'Agregar' }}
+          </button>
+          <button *ngIf="editMode" type="button" class="btn btn-outline" (click)="cancelarEdicion()">
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </section>
+
+  </div>
+</div>

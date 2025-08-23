@@ -1,44 +1,83 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { UsuarioService } from './usuario.service';
+import { UsuarioService, Usuario } from './usuario.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, HttpClientModule, FormsModule],
   templateUrl: './app.html',
-  providers: [UsuarioService]
+  styleUrls: ['./app.css'],
+  imports: [CommonModule, FormsModule],
 })
-export class AppComponent {
-  usuarios: any[] = [];
-  nuevoUsuario = { nombre: '', email: '', edad: null };
+export class App implements OnInit {
+  usuarios: Usuario[] = [];
 
-  constructor(private usuarioService: UsuarioService) {}
+  form: { nombre: string; email: string; edad: number | null } = {
+    nombre: '', email: '', edad: null
+  };
 
-  ngOnInit() {
-    this.cargarUsuarios();
+  editMode = false;
+  editingId: string | null = null;
+
+  constructor(private api: UsuarioService) {}
+
+  ngOnInit(): void { this.cargar(); }
+
+  cargar(): void {
+    this.api.list().subscribe(res => this.usuarios = res);
   }
 
-  cargarUsuarios() {
-    this.usuarioService.getUsuarios().subscribe(data => {
-      this.usuarios = data;
+  onSubmit(): void {
+    this.editMode ? this.actualizarUsuario() : this.agregarUsuario();
+  }
+
+  agregarUsuario(): void {
+    const payload: Usuario = {
+      nombre: this.form.nombre.trim(),
+      email: this.form.email.trim(),
+      edad: Number(this.form.edad ?? 0)
+    };
+    this.api.create(payload).subscribe(u => {
+      this.usuarios.push(u);
+      this.resetForm();
     });
   }
 
-  agregarUsuario() {
-    if (!this.nuevoUsuario.nombre || !this.nuevoUsuario.email) return;
+  editarUsuario(u: Usuario): void {
+    this.editMode = true;
+    this.editingId = u._id ?? null;
+    this.form = { nombre: u.nombre, email: u.email, edad: u.edad };
+  }
 
-    this.usuarioService.crearUsuario(this.nuevoUsuario).subscribe(usuario => {
-      this.usuarios.push(usuario);
-      this.nuevoUsuario = { nombre: '', email: '', edad: null };
+  actualizarUsuario(): void {
+    if (!this.editingId) return;
+    const payload = {
+      nombre: this.form.nombre.trim(),
+      email: this.form.email.trim(),
+      edad: Number(this.form.edad ?? 0)
+    };
+    this.api.update(this.editingId, payload).subscribe(upd => {
+      const i = this.usuarios.findIndex(x => x._id === this.editingId);
+      if (i > -1) this.usuarios[i] = upd;
+      this.cancelarEdicion();
     });
   }
 
-  eliminarUsuario(id: string) {
-    this.usuarioService.eliminarUsuario(id).subscribe(() => {
+  cancelarEdicion(): void {
+    this.editMode = false;
+    this.editingId = null;
+    this.resetForm();
+  }
+
+  eliminarUsuario(id: string): void {
+    this.api.remove(id).subscribe(() => {
       this.usuarios = this.usuarios.filter(u => u._id !== id);
+      if (this.editingId === id) this.cancelarEdicion();
     });
+  }
+
+  private resetForm(): void {
+    this.form = { nombre: '', email: '', edad: null };
   }
 }
